@@ -1,0 +1,190 @@
+
+
+<html>
+    <head>
+    
+        <style>
+            * {
+                box-sizing: border-box;
+            }
+    
+            body {
+                font-family: Arial, Helvetica, sans-serif;
+            }
+    
+            /* Float four columns side by side */
+            .column {
+                float: left;
+                width: 50%;
+                padding: 0 10px;
+            }
+    
+            /* Remove extra left and right margins, due to padding */
+            .row {
+                margin: 0 -5px;
+            }
+    
+                /* Clear floats after the columns */
+                .row:after {
+                    content: "";
+                    display: table;
+                    clear: both;
+                }
+    
+            #snapShot {
+                background-color: yellow;
+                height: 300px;
+            }
+            #anlysisDetailDiv {
+                padding: 50px;
+            }
+            /* Responsive columns */
+            @media screen and (max-width: 600px) {
+                .column {
+                    width: 100%;
+                    display: block;
+                    margin-bottom: 20px;
+                }
+            }
+    
+            /* Style the counter cards */
+            .card {
+                box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+                padding: 16px;
+                text-align: center;
+                background-color: #f1f1f1;
+            }
+    
+            .header {
+                background-color: #f1f1f1;
+                padding: 20px;
+                text-align: center;
+                margin-bottom: 20px;
+            }
+            .detailImg {
+                height: 200px; 
+               }
+
+            #snapShot {
+                background-color: dfe0df;
+                padding: 20px;
+            }
+    
+            #detail {
+                border-radius: 15px;
+                border: 1px solid #dfe0df;
+                padding: 10px;
+            }
+        </style>
+    </head>
+    <body>
+    
+    
+        <div class="row">
+            <div class="column">
+                <div class="card">
+                    <img src="http://localhost:5000/static/img/siteImg/heart.png" style="padding:25px"  ALIGN="left" height= 180>
+                    <img id="bg" src="{{ url_for('video_feed') }}">
+                </div>
+            </div>
+    
+            <div class="column">
+    
+                <div class="card">
+                    <h3>Analysis</h3>
+    
+                    <div id="analysisDiv">
+                        <div id="snapShotDiv">
+                            <img id="snapShot" src="">
+                        </div>
+                        <div id="anlysisDetailDiv">
+                            <table id="anlyisDetailTbl"></table>
+                        </div>
+                    </div>
+                    <div id="snapShotDiv">
+    
+                    </div>
+                    <div id="detailDiv">
+                        <h3>Recognized ?...</h3>
+                        <table id="bioDetail"></table>
+                    </div>
+                    <div id="picDetailDiv">
+                        <table id="picDetailTbl">
+                            
+
+                        </table>
+                    </div>
+    
+                </div>
+            </div>
+    
+        </div>
+    </body>
+    
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"
+            integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+            crossorigin="anonymous"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
+    <script type="text/javascript" charset="utf-8">
+        $(document).ready(
+            function () {
+                setInterval(function () {
+                    $.ajax({
+                        type: "GET",
+                        dataType: "json",
+                        url: "http://localhost:5000/video_anlysis",
+                    }).done(function (data) {
+                        var imageName = data.result_image_path;
+                        var imageBasePath = "http://localhost:5000/static/img/";
+                        var imageFullPath =  imageBasePath + imageName;
+                        $("#snapShot").attr("src", imageFullPath);
+                        $("#bioDetail tr").remove();
+                        $("#anlyisDetailTbl tr").remove();
+                        $("#picDetailTbl tr").remove();
+                        var row1 = $('<tr>');
+                        var personIdentified = true;
+                        $.each(data, (key, value) => {
+                            if(key === "Person Identified" && value === "Not Identified") {
+                                console.log("Skipping, not identified");
+                                personIdentified = false;
+                            }
+                        });
+                        
+                        $.each(data, (key, value) =>{
+                            console.log("key:value", key, value, "/key:value");
+                            if (key === "Calculated Age" || key === "Calculated Emotion" || key === "Calculated Gender") {
+    
+                                var row = $('<tr>');
+                                row.append($('<td> <b>').html(key));
+                                row.append($('<td>').html(value));
+                                $('#anlyisDetailTbl').append(row);
+                            }
+                            else if (personIdentified && (key === "image1"||key === "image2"||key === "image3")) {
+                             
+                                img1path = imageBasePath + value;
+                                var imgTag = '<img src='+ img1path +' class="detailImg"/>';
+                                row1.append("<td>" + imgTag + "</td>");
+                                $('#picDetailTbl').append(row1); 
+                            }
+                            else if (personIdentified && key === "result_image_path"){} 
+                            else if(personIdentified)
+                            {
+                            var row = $('<tr>');
+                            row.append($('<td> <b>').html(key));
+                            row.append($('<td>').html(value));
+                            $('#bioDetail').append(row);
+                            }
+                        });
+    
+                        console.log(data);
+                    }).fail(function (data) {
+    
+                        console.dir(data);
+                    })
+    
+                }, 6000);
+            });
+    
+    
+    </script>
+    </html>
